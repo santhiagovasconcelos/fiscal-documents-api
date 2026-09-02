@@ -3,6 +3,8 @@ using FiscalDocuments.Api.DTOs;
 using FiscalDocuments.Api.Interfaces;
 using FiscalDocuments.Api.Models;
 using FiscalDocuments.Api.Data;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace FiscalDocuments.Api.Services;
 
@@ -13,6 +15,17 @@ public class FiscalDocumentService : IFiscalDocumentService
     public FiscalDocumentService(FiscalDocumentsDbContext dbContext)
     {
         _dbContext = dbContext;
+    }
+
+    private static string GetXmlHash(XDocument xml)
+    {
+        var normalizedXml = xml.ToString(SaveOptions.DisableFormatting);
+
+        var bytes = Encoding.UTF8.GetBytes(normalizedXml);
+
+        var hash = SHA256.HashData(bytes);
+
+        return Convert.ToHexString(hash);
     }
 
     // Retorna os documentos cadastrados, priorizando os mais recentes.
@@ -98,6 +111,16 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         var documentType = GetDocumentType(xml);
         var accessKey = GetAccessKey(xml, documentType);
+        var xmlHash = GetXmlHash(xml);
+
+        if (_dbContext.FiscalDocuments.Any(x =>
+            x.XmlHash == xmlHash &&
+            x.Id != id))
+        {
+            throw new InvalidOperationException(
+                "Este XML já foi processado."
+            );
+        }
 
         // Impede que a atualização gere uma chave já utilizada por outro documento.
         if (_dbContext.FiscalDocuments.Any(x =>
@@ -111,10 +134,11 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         fiscalDocument.AccessKey = accessKey;
         fiscalDocument.DocumentType = documentType;
-        fiscalDocument.IssuerCnpj = GetIssuerCnpj(xml);
-        fiscalDocument.RecipientCnpj = GetRecipientCnpj(xml);
+        fiscalDocument.IssuerCnpj = GetIssuerCnpj(xml, documentType);
+        fiscalDocument.RecipientCnpj = GetRecipientCnpj(xml, documentType);
         fiscalDocument.IssueDate = GetIssueDate(xml);
         fiscalDocument.XmlContent = dto.XmlContent;
+        fiscalDocument.XmlHash = xmlHash;
 
         _dbContext.SaveChanges();
 
@@ -169,17 +193,27 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         var documentType = GetDocumentType(xml);
 
+        var xmlHash = GetXmlHash(xml);
+
         var fiscalDocument = new FiscalDocument
         {
             Id = Guid.NewGuid(),
             AccessKey = GetAccessKey(xml, documentType),
             DocumentType = documentType,
-            IssuerCnpj = GetIssuerCnpj(xml),
-            RecipientCnpj = GetRecipientCnpj(xml),
+            IssuerCnpj = GetIssuerCnpj(xml, documentType),
+            RecipientCnpj = GetRecipientCnpj(xml, documentType),
             IssueDate = GetIssueDate(xml),
             XmlContent = dto.XmlContent,
+            XmlHash = xmlHash,
             CreatedAt = DateTime.UtcNow
         };
+        if (_dbContext.FiscalDocuments
+    .Any(x => x.XmlHash == fiscalDocument.XmlHash))
+        {
+            throw new InvalidOperationException(
+                "Este XML já foi processado."
+            );
+        }
 
         if (_dbContext.FiscalDocuments
             .Any(x => x.AccessKey == fiscalDocument.AccessKey))
@@ -216,54 +250,100 @@ public class FiscalDocumentService : IFiscalDocumentService
             return FiscalDocumentType.CTe;
         }
 
+        var hasNFSe = xml
+              .Descendants()
+              .Any(x =>
+                  x.Name.LocalName == "Nfse" ||
+                  x.Name.LocalName == "CompNfse" ||
+                  x.Name.LocalName == "InfNfse");
+
+        if (hasNFSe)
+        {
+            return FiscalDocumentType.NFSe;
+        }
+
         throw new ArgumentException("Tipo de documento fiscal não suportado.");
     }
 
     private static string GetAccessKey(XDocument xml, FiscalDocumentType documentType)
     {
-        var elementName = documentType == FiscalDocumentType.NFe
-            ? "infNFe"
-            : "infCte";
+        var elementName = documentType switch
+        {
+            FiscalDocumentType.NFe => "infNFe",
+            FiscalDocumentType.CTe => "infCte",
+            FiscalDocumentType.NFSe => "InfNfse",
+            _ => throw new ArgumentException(
+                "Tipo de documento fiscal não suportado.")
+        };
 
         var element = xml
-            .Descendants()
-            .FirstOrDefault(x => x.Name.LocalName == elementName);
+               .Descendants()
+               .FirstOrDefault(x =>
+                   x.Name.LocalName.Equals(
+                       elementName,
+                       StringComparison.OrdinalIgnoreCase));
+
 
         var id = element?.Attribute("Id")?.Value;
 
         if (string.IsNullOrWhiteSpace(id))
         {
             throw new ArgumentException(
-                "Não foi possível localizar a chave de acesso."
+                "Não foi possível localizar o identificador do documento fiscal."
             );
         }
 
         return id
-            .Replace("NFe", "")
-            .Replace("CTe", "");
+            .Replace("NFe", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("CTe", "", StringComparison.OrdinalIgnoreCase)
+            .Replace("NFSe", "", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string GetIssuerCnpj(XDocument xml)
+    private static string GetIssuerCnpj(
+        XDocument xml,
+        FiscalDocumentType documentType)
     {
+        var elementName = documentType == FiscalDocumentType.NFSe
+        ? "PrestadorServico"
+        : "emit";
+
         var issuer = xml
             .Descendants()
-            .FirstOrDefault(x => x.Name.LocalName == "emit");
+            .FirstOrDefault(x =>
+                x.Name.LocalName.Equals(
+                    elementName,
+                    StringComparison.OrdinalIgnoreCase));
 
         return issuer?
-            .Elements()
-            .FirstOrDefault(x => x.Name.LocalName == "CNPJ")
+            .Descendants()
+            .FirstOrDefault(x => x.Name.LocalName.Equals(
+                "CNPJ",
+                StringComparison.OrdinalIgnoreCase))
             ?.Value ?? string.Empty;
     }
 
-    private static string GetRecipientCnpj(XDocument xml)
+    private static string GetRecipientCnpj(
+        XDocument xml,
+        FiscalDocumentType documentType)
     {
+        var elementName = documentType == FiscalDocumentType.NFSe
+        ? "TomadorServico"
+        : "dest";
+
         var recipient = xml
             .Descendants()
-            .FirstOrDefault(x => x.Name.LocalName == "dest");
+            .FirstOrDefault(x =>
+                x.Name.LocalName.Equals(
+                    elementName,
+                    StringComparison.OrdinalIgnoreCase));
 
         return recipient?
+            .Descendants()
             .Elements()
-            .FirstOrDefault(x => x.Name.LocalName == "CNPJ")
+            .FirstOrDefault(x =>
+                x.Name.LocalName.Equals(
+                    "CNPJ",
+                    StringComparison.OrdinalIgnoreCase))
             ?.Value ?? string.Empty;
     }
 
@@ -273,7 +353,8 @@ public class FiscalDocumentService : IFiscalDocumentService
             .Descendants()
             .FirstOrDefault(x =>
                 x.Name.LocalName == "dhEmi" ||
-                x.Name.LocalName == "dEmi");
+                x.Name.LocalName == "dEmi" ||
+            x.Name.LocalName == "DataEmissao");
 
         if (issueDate is null ||
             !DateTimeOffset.TryParse(issueDate.Value, out var date))

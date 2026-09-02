@@ -16,6 +16,8 @@ public class FiscalDocument
 
     public string XmlContent { get; set; } = string.Empty;
 
+    public string? XmlHash { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public bool Active { get; set; } = true;
 }

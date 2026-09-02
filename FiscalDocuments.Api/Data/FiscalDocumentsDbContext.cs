@@ -27,6 +27,14 @@ public class FiscalDocumentsDbContext : DbContext
             .Property(x => x.DocumentType)
             .HasConversion<string>()
             .HasMaxLength(10);
+
+        modelBuilder.Entity<FiscalDocument>()
+            .Property(x => x.XmlHash)
+            .HasMaxLength(64);
+
+        modelBuilder.Entity<FiscalDocument>()
+            .HasIndex(x => x.XmlHash)
+            .IsUnique();
     }
 }
 
