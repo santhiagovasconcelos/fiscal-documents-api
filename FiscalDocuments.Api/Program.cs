@@ -2,11 +2,19 @@ using FiscalDocuments.Api.Interfaces;
 using FiscalDocuments.Api.Services;
 using FiscalDocuments.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Registreo dos controllers da API. 
-builder.Services.AddControllers();
+//Registro dos controllers da API e conversão para não apresentar número no json retornado pela API. 
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter()
+        );
+    });
 
 // Registro do serviço para injeção de dependência.
 builder.Services.AddScoped<IFiscalDocumentService, FiscalDocumentService>();

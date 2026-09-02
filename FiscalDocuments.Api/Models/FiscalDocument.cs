@@ -6,7 +6,7 @@ public class FiscalDocument
 
     public string AccessKey { get; set; } = string.Empty;
 
-    public string DocumentType { get; set; } = string.Empty;
+    public FiscalDocumentType DocumentType { get; set; }
 
     public string IssuerCnpj { get; set; } = string.Empty;
 

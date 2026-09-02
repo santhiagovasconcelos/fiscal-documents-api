@@ -26,8 +26,17 @@ public class FiscalDocumentService : IFiscalDocumentService
         var query = _dbContext.FiscalDocuments.AsQueryable();
         if (!string.IsNullOrWhiteSpace(documentType))
         {
+            if (!Enum.TryParse<FiscalDocumentType>(
+                documentType,
+                true,
+                out var parsedDocumentType))
+            {
+                throw new ArgumentException(
+                    "Tipo de documento fiscal inválido."
+                );
+            }
             query = query.Where(x =>
-                x.DocumentType == documentType);
+                x.DocumentType == parsedDocumentType);
         }
 
         if (!string.IsNullOrWhiteSpace(cnpj))
@@ -46,7 +55,7 @@ public class FiscalDocumentService : IFiscalDocumentService
             {
                 Id = x.Id,
                 AccessKey = x.AccessKey,
-                DocumentType = x.DocumentType,
+                DocumentType = x.DocumentType.ToString(),
                 IssuerCnpj = x.IssuerCnpj,
                 RecipientCnpj = x.RecipientCnpj,
                 IssueDate = x.IssueDate,
@@ -187,7 +196,7 @@ public class FiscalDocumentService : IFiscalDocumentService
         return fiscalDocument;
     }
 
-    private static string GetDocumentType(XDocument xml)
+    private static FiscalDocumentType GetDocumentType(XDocument xml)
     {
         var hasNFe = xml
             .Descendants()
@@ -195,7 +204,7 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         if (hasNFe)
         {
-            return "NFe";
+            return FiscalDocumentType.NFe;
         }
 
         var hasCTe = xml
@@ -204,15 +213,15 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         if (hasCTe)
         {
-            return "CTe";
+            return FiscalDocumentType.CTe;
         }
 
         throw new ArgumentException("Tipo de documento fiscal não suportado.");
     }
 
-    private static string GetAccessKey(XDocument xml, string documentType)
+    private static string GetAccessKey(XDocument xml, FiscalDocumentType documentType)
     {
-        var elementName = documentType == "NFe"
+        var elementName = documentType == FiscalDocumentType.NFe
             ? "infNFe"
             : "infCte";
 

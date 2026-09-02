@@ -22,6 +22,11 @@ public class FiscalDocumentsDbContext : DbContext
         modelBuilder.Entity<FiscalDocument>()
             .Property(x => x.AccessKey)
             .HasMaxLength(44);
+
+        modelBuilder.Entity<FiscalDocument>()
+            .Property(x => x.DocumentType)
+            .HasConversion<string>()
+            .HasMaxLength(10);
     }
 }
 
