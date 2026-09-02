@@ -20,11 +20,31 @@ public class FiscalDocumentsController : ControllerBase
     [HttpPost]
     public IActionResult Create(CreateFiscalDocumentDto dto)
     {
-        var document = _fiscalDocumentService.Create(dto);
 
-        return Created(
-            $"/api/fiscal-documents/{document.Id}",
-            document
-        );
+        try
+        {
+            var document = _fiscalDocumentService.Create(dto);
+
+            return Created(
+                $"/api/fiscal-documents/{document.Id}",
+                document
+            );
+        }
+        catch (ArgumentException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new
+            {
+                message = ex.Message
+            });
+        }
+
+
     }
 }

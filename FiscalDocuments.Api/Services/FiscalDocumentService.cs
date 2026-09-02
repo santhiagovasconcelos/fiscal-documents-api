@@ -52,6 +52,14 @@ public class FiscalDocumentService : IFiscalDocumentService
             CreatedAt = DateTime.UtcNow
         };
 
+        if (_dbContext.FiscalDocuments
+            .Any(x => x.AccessKey == fiscalDocument.AccessKey))
+        {
+            throw new InvalidOperationException(
+                "Já existe um documento fiscal com esta chave de acesso."
+            );
+        }
+
         // Persiste o documento fiscal após a extração dos dados do XML.
         _dbContext.FiscalDocuments.Add(fiscalDocument);
         _dbContext.SaveChanges();
