@@ -1,20 +1,25 @@
 using System.Xml.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using FiscalDocuments.Api.DTOs;
 using FiscalDocuments.Api.Interfaces;
 using FiscalDocuments.Api.Models;
 using FiscalDocuments.Api.Data;
-using System.Security.Cryptography;
-using System.Text;
+using FiscalDocuments.Api.Messaging;
 
 namespace FiscalDocuments.Api.Services;
 
 public class FiscalDocumentService : IFiscalDocumentService
 {
     private readonly FiscalDocumentsDbContext _dbContext;
+    private readonly RabbitMqPublisher _rabbitMqPublisher;
 
-    public FiscalDocumentService(FiscalDocumentsDbContext dbContext)
+    public FiscalDocumentService(
+        FiscalDocumentsDbContext dbContext,
+        RabbitMqPublisher rabbitMqPublisher)
     {
         _dbContext = dbContext;
+        _rabbitMqPublisher = rabbitMqPublisher;
     }
 
     private static string GetXmlHash(XDocument xml)
@@ -188,7 +193,7 @@ public class FiscalDocumentService : IFiscalDocumentService
 
     //Recebe do Dto o xml enviado pela API
     // e extrai os dados necessários para montar o documento fiscal.
-    public FiscalDocument Create(CreateFiscalDocumentDto dto)
+    public async Task<FiscalDocument> CreateAsync(CreateFiscalDocumentDto dto)
     {
 
         //validando conteúdo
@@ -225,8 +230,9 @@ public class FiscalDocumentService : IFiscalDocumentService
             XmlHash = xmlHash,
             CreatedAt = DateTime.UtcNow
         };
+
         if (_dbContext.FiscalDocuments
-    .Any(x => x.XmlHash == fiscalDocument.XmlHash))
+            .Any(x => x.XmlHash == fiscalDocument.XmlHash))
         {
             throw new InvalidOperationException(
                 "Este XML já foi processado."
@@ -243,7 +249,19 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         // Persiste o documento fiscal após a extração dos dados do XML.
         _dbContext.FiscalDocuments.Add(fiscalDocument);
-        _dbContext.SaveChanges();
+
+        await _dbContext.SaveChangesAsync();
+
+        var message = new FiscalDocumentMessage
+        {
+            DocumentId = fiscalDocument.Id,
+            CreatedAt = fiscalDocument.CreatedAt
+        };
+
+        await _rabbitMqPublisher.PublishAsync(
+            "fiscal-document-processing",
+            message
+        );
 
         return fiscalDocument;
     }

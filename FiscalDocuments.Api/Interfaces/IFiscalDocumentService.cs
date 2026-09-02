@@ -5,7 +5,7 @@ namespace FiscalDocuments.Api.Interfaces;
 
 public interface IFiscalDocumentService
 {
-    FiscalDocument Create(CreateFiscalDocumentDto dto);
+    Task<FiscalDocument> CreateAsync(CreateFiscalDocumentDto dto);
     List<FiscalDocumentListDto> GetAll(
         int page,
         int pageSize,

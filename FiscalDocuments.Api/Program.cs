@@ -1,8 +1,9 @@
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using FiscalDocuments.Api.Interfaces;
 using FiscalDocuments.Api.Services;
 using FiscalDocuments.Api.Data;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
+using FiscalDocuments.Api.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,11 @@ builder.Services.AddDbContext<FiscalDocumentsDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
+
+builder.Services.Configure<RabbitMqSettings>(
+    builder.Configuration.GetSection("RabbitMq"));
+
+builder.Services.AddScoped<RabbitMqPublisher>();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

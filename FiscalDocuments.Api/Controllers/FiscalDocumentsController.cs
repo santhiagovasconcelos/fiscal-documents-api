@@ -116,12 +116,12 @@ public class FiscalDocumentsController : ControllerBase
 
     // O controller recebe a requisição HTTP e delega o processamento do documento fiscal para o serviço.
     [HttpPost]
-    public IActionResult Create(CreateFiscalDocumentDto dto)
+    public async Task<IActionResult> Create(CreateFiscalDocumentDto dto)
     {
 
         try
         {
-            var document = _fiscalDocumentService.Create(dto);
+            var document = await _fiscalDocumentService.CreateAsync(dto);
 
             return Created(
                 $"/api/fiscal-documents/{document.Id}",
