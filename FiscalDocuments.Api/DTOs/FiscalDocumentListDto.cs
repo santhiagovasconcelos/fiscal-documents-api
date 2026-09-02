@@ -1,21 +1,12 @@
-namespace FiscalDocuments.Api.Models;
+namespace FiscalDocuments.Api.DTOs;
 
-public class FiscalDocument
+public class FiscalDocumentListDto
 {
     public Guid Id { get; set; }
-
     public string AccessKey { get; set; } = string.Empty;
-
     public string DocumentType { get; set; } = string.Empty;
-
     public string IssuerCnpj { get; set; } = string.Empty;
-
     public string RecipientCnpj { get; set; } = string.Empty;
-
     public DateTime IssueDate { get; set; }
-
-    public string XmlContent { get; set; } = string.Empty;
-
     public DateTime CreatedAt { get; set; }
-    public bool Active { get; set; } = true;
 }
