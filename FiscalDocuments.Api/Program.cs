@@ -33,6 +33,15 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+// Aplica automaticamente as migrations pendentes ao iniciar a aplicação.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider
+        .GetRequiredService<FiscalDocumentsDbContext>();
+
+    dbContext.Database.Migrate();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
