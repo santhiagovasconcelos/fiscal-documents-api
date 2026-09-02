@@ -94,14 +94,24 @@ public class FiscalDocumentsController : ControllerBase
         string? cnpj = null
     )
     {
-        var documents = _fiscalDocumentService.GetAll(
-            page,
-            pageSize,
-            documentType,
-            cnpj
-        );
+        try
+        {
+            var documents = _fiscalDocumentService.GetAll(
+                page,
+                pageSize,
+                documentType,
+                cnpj
+            );
 
-        return Ok(documents);
+            return Ok(documents);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     // O controller recebe a requisição HTTP e delega o processamento do documento fiscal para o serviço.
@@ -120,7 +130,7 @@ public class FiscalDocumentsController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            return Conflict(new
+            return BadRequest(new
             {
                 message = ex.Message
             });

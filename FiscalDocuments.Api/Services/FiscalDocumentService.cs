@@ -36,7 +36,25 @@ public class FiscalDocumentService : IFiscalDocumentService
         string? cnpj
     )
     {
-        var query = _dbContext.FiscalDocuments.AsQueryable();
+        if (page <= 0)
+        {
+            throw new ArgumentException(
+                "A página deve ser maior que zero."
+            );
+        }
+
+        if (pageSize <= 0)
+        {
+            throw new ArgumentException(
+                "O tamanho da página deve ser maior que zero."
+            );
+        }
+
+        //Pegando apenas documentos Active = true (arquivos "deletados" não devem aparecer)
+        var query = _dbContext.FiscalDocuments
+            .Where(x => x.Active)
+            .AsQueryable();
+
         if (!string.IsNullOrWhiteSpace(documentType))
         {
             if (!Enum.TryParse<FiscalDocumentType>(
