@@ -2,15 +2,24 @@ using System.Xml.Linq;
 using FiscalDocuments.Api.DTOs;
 using FiscalDocuments.Api.Interfaces;
 using FiscalDocuments.Api.Models;
+using FiscalDocuments.Api.Data;
 
 namespace FiscalDocuments.Api.Services;
 
 public class FiscalDocumentService : IFiscalDocumentService
 {
+    private readonly FiscalDocumentsDbContext _dbContext;
+
+    public FiscalDocumentService(FiscalDocumentsDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
     //Recebe do Dto o xml enviado pela API
     // e extrai os dados necessários para montar o documento fiscal.
     public FiscalDocument Create(CreateFiscalDocumentDto dto)
     {
+
         //validando conteúdo
         if (string.IsNullOrWhiteSpace(dto.XmlContent))
         {
@@ -42,6 +51,10 @@ public class FiscalDocumentService : IFiscalDocumentService
             XmlContent = dto.XmlContent,
             CreatedAt = DateTime.UtcNow
         };
+
+        // Persiste o documento fiscal após a extração dos dados do XML.
+        _dbContext.FiscalDocuments.Add(fiscalDocument);
+        _dbContext.SaveChanges();
 
         return fiscalDocument;
     }
@@ -126,13 +139,13 @@ public class FiscalDocumentService : IFiscalDocumentService
                 x.Name.LocalName == "dEmi");
 
         if (issueDate is null ||
-            !DateTime.TryParse(issueDate.Value, out var date))
+            !DateTimeOffset.TryParse(issueDate.Value, out var date))
         {
             throw new ArgumentException(
                 "Não foi possível identificar a data de emissão."
             );
         }
 
-        return date;
+        return date.UtcDateTime;
     }
 }
