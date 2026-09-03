@@ -1,3 +1,4 @@
+using System.Xml;
 using System.Xml.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -123,7 +124,7 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         try
         {
-            xml = XDocument.Parse(dto.XmlContent);
+            xml = ParseXmlSecure(dto.XmlContent);
         }
         catch
         {
@@ -206,8 +207,7 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         try
         {
-            // Converte o XML recebido em uma estrutura navegável pelo LINQ to XML.
-            xml = XDocument.Parse(dto.XmlContent);
+            xml = ParseXmlSecure(dto.XmlContent);
         }
         catch
         {
@@ -400,5 +400,20 @@ public class FiscalDocumentService : IFiscalDocumentService
         }
 
         return date.UtcDateTime;
+    }
+
+    // Realiza o parse do XML bloqueando DTD e entidades externas.
+    private static XDocument ParseXmlSecure(string xmlContent)
+    {
+        var settings = new XmlReaderSettings
+        {
+            DtdProcessing = DtdProcessing.Prohibit,
+            XmlResolver = null
+        };
+
+        using var stringReader = new StringReader(xmlContent);
+        using var xmlReader = XmlReader.Create(stringReader, settings);
+
+        return XDocument.Load(xmlReader);
     }
 }
