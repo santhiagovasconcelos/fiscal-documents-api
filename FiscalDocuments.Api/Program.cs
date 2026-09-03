@@ -31,7 +31,7 @@ builder.Services.AddDbContext<FiscalDocumentsDbContext>(options =>
 builder.Services.Configure<RabbitMqSettings>(
     builder.Configuration.GetSection("RabbitMq"));
 
-builder.Services.AddScoped<RabbitMqPublisher>();
+builder.Services.AddScoped<IRabbitMqPublisher, RabbitMqPublisher>();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

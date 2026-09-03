@@ -2,10 +2,11 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using FiscalDocuments.Api.Interfaces;
 
 namespace FiscalDocuments.Api.Messaging;
 
-public class RabbitMqPublisher
+public class RabbitMqPublisher : IRabbitMqPublisher
 {
     private readonly RabbitMqSettings _settings;
 

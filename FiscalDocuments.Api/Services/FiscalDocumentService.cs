@@ -12,11 +12,11 @@ namespace FiscalDocuments.Api.Services;
 public class FiscalDocumentService : IFiscalDocumentService
 {
     private readonly FiscalDocumentsDbContext _dbContext;
-    private readonly RabbitMqPublisher _rabbitMqPublisher;
+    private readonly IRabbitMqPublisher _rabbitMqPublisher;
 
     public FiscalDocumentService(
         FiscalDocumentsDbContext dbContext,
-        RabbitMqPublisher rabbitMqPublisher)
+        IRabbitMqPublisher rabbitMqPublisher)
     {
         _dbContext = dbContext;
         _rabbitMqPublisher = rabbitMqPublisher;
