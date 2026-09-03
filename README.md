@@ -187,6 +187,21 @@ O ambiente sobe:
 - API
 - Worker
 
+### Pré-requisitos
+
+Para executar o projeto com Docker é necessário ter o Docker Desktop instalado e em execução.
+
+Também é necessário que as portas utilizadas pelo projeto estejam disponíveis:
+
+| Serviço             | Porta |
+| ------------------- | ----: |
+| API                 |  8080 |
+| PostgreSQL          |  5433 |
+| RabbitMQ            |  5672 |
+| RabbitMQ Management | 15672 |
+
+> O PostgreSQL utiliza a porta `5432` internamente no Docker e é exposto na porta `5433` do host.
+
 ### 1. Clonar o repositório
 
 ```bash
