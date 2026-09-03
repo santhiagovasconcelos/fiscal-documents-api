@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiscalDocuments.Api", "FiscalDocuments.Api\FiscalDocuments.Api.csproj", "{CC90D855-1E82-4993-B250-E70437D1E641}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FiscalDocuments.Worker", "FiscalDocuments.Worker\FiscalDocuments.Worker.csproj", "{07ED3651-C2F9-4F04-8543-A1538C27C201}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{CC90D855-1E82-4993-B250-E70437D1E641}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC90D855-1E82-4993-B250-E70437D1E641}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC90D855-1E82-4993-B250-E70437D1E641}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07ED3651-C2F9-4F04-8543-A1538C27C201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07ED3651-C2F9-4F04-8543-A1538C27C201}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07ED3651-C2F9-4F04-8543-A1538C27C201}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07ED3651-C2F9-4F04-8543-A1538C27C201}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
