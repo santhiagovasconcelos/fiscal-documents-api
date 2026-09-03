@@ -330,9 +330,15 @@ Para executar:
 dotnet test
 ```
 
-Foram adicionados testes para regras importantes do serviço, incluindo criação de documentos, validações, duplicidade, atualização, exclusão e consultas.
+Foram adicionados testes para regras importantes do serviço, incluindo criação de documentos, validações, controle de duplicidade e exclusão lógica.
 
 ## Algumas decisões do projeto
+
+### Banco de dados
+
+Foi utilizado PostgreSQL por se tratar de dados estruturados e com relacionamentos e regras de integridade bem definidos.
+
+O Entity Framework Core foi utilizado para acesso aos dados e controle da evolução do banco através de migrations.
 
 ### XML original
 
