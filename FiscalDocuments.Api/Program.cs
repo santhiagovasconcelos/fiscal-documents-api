@@ -7,7 +7,7 @@ using FiscalDocuments.Api.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Registro dos controllers da API e conversão para não apresentar número no json retornado pela API. 
+// Registro dos controllers da API e conversão dos enums para texto no JSON retornado.
 builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
@@ -45,7 +45,8 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider
         .GetRequiredService<FiscalDocumentsDbContext>();
 
-    dbContext.Database.Migrate();
+    await dbContext.Database.MigrateAsync();
+    await DatabaseSeeder.SeedAsync(dbContext);
 }
 
 // Configure the HTTP request pipeline.

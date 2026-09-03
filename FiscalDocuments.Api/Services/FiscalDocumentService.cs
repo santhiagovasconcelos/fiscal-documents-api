@@ -375,7 +375,6 @@ public class FiscalDocumentService : IFiscalDocumentService
 
         return recipient?
             .Descendants()
-            .Elements()
             .FirstOrDefault(x =>
                 x.Name.LocalName.Equals(
                     "CNPJ",
